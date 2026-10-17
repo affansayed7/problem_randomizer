@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>DSA Vault</title>
+<style>
+:root{
+  --bg:#fbfbfd;--bg2:#f5f5f7;--card:rgba(255,255,255,.72);--solid:#fff;--text:#1d1d1f;--muted:#6e6e73;
+  --line:rgba(0,0,0,.08);--accent:#0071e3;--accent2:#7c3aed;--easy:#30d158;--medium:#ff9f0a;--hard:#ff453a;
+  --shadow:0 10px 40px rgba(0,0,0,.08);--blob:.45
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#000;--bg2:#0b0b0d;--card:rgba(28,28,32,.66);--solid:#1c1c1e;--text:#f5f5f7;--muted:#98989f;
+  --line:rgba(255,255,255,.1);--accent:#2997ff;--accent2:#a78bfa;--shadow:0 10px 50px rgba(0,0,0,.6);--blob:.35}}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.47;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* animated backdrop */
+.blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:var(--blob);animation:float 18s ease-in-out infinite}
+.b1{width:520px;height:520px;background:#0071e3;top:-120px;left:-100px}
+.b2{width:480px;height:480px;background:#a855f7;top:25%;right:-140px;animation-delay:-6s}
+.b3{width:440px;height:440px;background:#ff2d92;bottom:-120px;left:25%;animation-delay:-12s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,-40px) scale(1.12)}}
+/* nav */
+nav{position:sticky;top:0;z-index:50;height:52px;display:flex;align-items:center;justify-content:center;gap:28px;
+  background:var(--card);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid var(--line)}
+nav a{color:var(--text);text-decoration:none;font-size:.82rem;opacity:.75;transition:.2s}
+nav a:hover{opacity:1}
+nav .logo{font-weight:700;opacity:1;font-size:.95rem}
+@media(max-width:560px){nav{gap:14px}nav a{font-size:.74rem}}
+/* layout */
+section{max-width:980px;margin:0 auto;padding:70px 20px}
+.eyebrow{font-weight:600;font-size:.95rem;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.03em;line-height:1.08;font-weight:700;margin:6px 0 10px}
+.lead{color:var(--muted);font-size:1.15rem;max-width:620px;margin-bottom:30px}
+/* hero */
+.hero{text-align:center;padding-top:90px;padding-bottom:40px}
+.hero h1{font-size:clamp(2.8rem,10vw,6.4rem);letter-spacing:-.045em;line-height:1;font-weight:800;margin:12px 0 18px;
+  background:linear-gradient(100deg,var(--text) 10%,var(--accent) 50%,var(--accent2) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);font-size:clamp(1.05rem,2.4vw,1.45rem);max-width:640px;margin:0 auto 28px}
+.cta{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{font:inherit;cursor:pointer;border:none;border-radius:980px;padding:12px 24px;font-size:1rem;font-weight:500;transition:transform .2s,box-shadow .2s,opacity .2s;text-decoration:none;display:inline-block}
+.btn:hover{transform:scale(1.03)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 40%,transparent)}
+.btn.ghost{background:var(--card);color:var(--text);border:1px solid var(--line);backdrop-filter:blur(10px)}
+.btn.sm{padding:8px 16px;font-size:.88rem}
+.btn.danger{color:var(--hard)}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:56px}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:24px;padding:22px 12px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:2.6rem;letter-spacing:-.04em;font-weight:700;line-height:1.1}
+.stat span{color:var(--muted);font-size:.85rem}
+/* cards */
+.card{background:var(--card);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);
+  border:1px solid var(--line);border-radius:28px;padding:28px;box-shadow:var(--shadow)}
+.stage{position:relative;overflow:hidden;text-align:center;padding:44px 24px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stage::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent,color-mix(in srgb,var(--accent) 22%,transparent),transparent 40%,color-mix(in srgb,var(--accent2) 22%,transparent),transparent);animation:spin 14s linear infinite;z-index:0}
+.stage>*{position:relative;z-index:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dice{font-size:4.2rem;display:inline-block;transition:transform .5s}
+.dice.roll{animation:tumble .7s ease}
+@keyframes tumble{0%{transform:rotate(0) scale(1)}40%{transform:rotate(360deg) scale(1.3)}100%{transform:rotate(720deg) scale(1)}}
+.pickTitle{font-size:clamp(1.6rem,4.5vw,2.6rem);letter-spacing:-.03em;font-weight:700;line-height:1.15;margin:10px 0}
+.pickTitle.shuffle{opacity:.55;filter:blur(1.5px)}
+.hint{color:var(--muted);font-size:.9rem}
+/* chips / pills */
+.pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 4px}
+.pill{font:inherit;font-size:.85rem;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 15px;border-radius:980px;transition:.2s;backdrop-filter:blur(10px)}
+.pill.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.filters{display:flex;flex-direction:column;gap:10px;align-items:center;margin-bottom:22px}
+.filters small{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em}
+.badge{display:inline-block;padding:3px 11px;border-radius:99px;font-size:.75rem;font-weight:600;color:#fff}
+.badge.Easy{background:var(--easy)}.badge.Medium{background:var(--medium)}.badge.Hard{background:var(--hard)}
+.tag{display:inline-block;background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);padding:3px 11px;border-radius:99px;font-size:.8rem;margin:3px 4px 3px 0;font-weight:500}
+.notes{white-space:pre-wrap;background:var(--bg2);border-radius:18px;padding:14px 18px;margin-top:12px;text-align:left;font-size:.95rem}
+.reveal{margin-top:20px;width:100%;max-width:560px;animation:rise .5s ease}
+.hidden{display:none!important}
+.meta{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+/* form */
+.form{display:grid;gap:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.two{grid-template-columns:1fr}}
+label{font-size:.8rem;color:var(--muted);display:block;margin:0 0 6px 4px;font-weight:500}
+input[type=text],input:not([type]),select,textarea{width:100%;font:inherit;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--text);outline:none;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+textarea{min-height:110px;resize:vertical}
+.toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.95rem;user-select:none}
+.toggle input{width:20px;height:20px;accent-color:var(--hard)}
+/* library */
+.lib-tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:22px}
+@media(max-width:640px){.lib-tools{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.item{display:flex;flex-direction:column;padding:22px;border-radius:26px;transition:transform .3s,box-shadow .3s}
+.item:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 22px 60px rgba(0,0,0,.18)}
+.item h3{font-size:1.2rem;letter-spacing:-.02em;margin:10px 0 6px}
+.item h3 a{color:var(--text);text-decoration:none}
+.item h3 a:hover{color:var(--accent)}
+.item .meta{justify-content:flex-start}
+.item .actions{margin-top:auto;padding-top:14px;display:flex;gap:6px;flex-wrap:wrap}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px 0;font-size:1.1rem}
+/* reveal on scroll */
+.fx{opacity:0;transform:translateY(34px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.fx.in{opacity:1;transform:none}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px 0 50px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fx{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+<nav>
+  <a class="logo" href="#top">🧠 DSA Vault</a>
+  <a href="#practice">Practice</a>
+  <a href="#add" id="navAdd">Add</a>
+  <a href="#library">Library</a>
+  <a href="#backup">Backup</a>
+</nav>
+
+<section class="hero" id="top">
+  <div class="eyebrow fx">Your personal LeetCode memory</div>
+  <h1 class="fx">Think.<br>Pick. Master.</h1>
+  <p class="fx">Save the problems that beat you. Get served one at random. Figure out the data structure yourself, then check your notes.</p>
+  <div class="cta fx">
+    <a class="btn primary" href="#practice">Start practising</a>
+    <a class="btn ghost" href="#add">Save a problem</a>
+  </div>
+  <div class="stats fx">
+    <div class="stat"><b id="sTotal">0</b><span>Saved</span></div>
+    <div class="stat"><b id="sTough">0</b><span>Tough 🔥</span></div>
+    <div class="stat"><b id="sForgot">0</b><span>Forgotten</span></div>
+    <div class="stat"><b id="sSeen">0</b><span>Practised</span></div>
+  </div>
+</section>
+
+<!-- PRACTICE -->
+<section id="practice">
+  <div class="eyebrow fx">Random practice</div>
+  <h2 class="fx">Which pattern is it?</h2>
+  <p class="lead fx">No tags. No hints. Open the problem, decide the approach, then reveal what you saved.</p>
+
+  <div class="filters fx">
+    <small>Difficulty</small>
+    <div class="pills" id="pDiff">
+      <button class="pill on" data-v="">Any</button><button class="pill" data-v="Easy">Easy</button>
+      <button class="pill" data-v="Medium">Medium</button><button class="pill" data-v="Hard">Hard</button>
+    </div>
+    <small>Pool</small>
+    <div class="pills" id="pPool">
+      <button class="pill on" data-v="all">All</button><button class="pill" data-v="tough">Tough 🔥</button>
+      <button class="pill" data-v="forgot">Forgot 😵</button><button class="pill" data-v="unseen">Least practised</button>
+    </div>
+  </div>
+
+  <div class="card stage fx">
+    <div id="idle">
+      <div class="dice" id="dice">🎲</div>
+      <p class="pickTitle" style="opacity:.85">Ready when you are</p>
+      <p class="hint">Hit the button for a random problem.</p>
+    </div>
+    <div id="pick" class="hidden" style="width:100%">
+      <div class="dice" id="dice2" style="font-size:2.4rem">🎯</div>
+      <p class="pickTitle" id="pickTitle"></p>
+      <div class="meta" id="pickMeta"></div>
+      <div class="row">
+        <a id="pickLink" class="btn primary" target="_blank" rel="noopener">Open on LeetCode ↗</a>
+        <button class="btn ghost" id="revealBtn">👁 Reveal approach</button>
+      </div>
+      <div class="reveal hidden" id="reveal" style="margin-inline:auto">
+        <div id="revealTags"></div>
+        <div class="notes" id="revealNotes"></div>
+        <div class="row">
+          <button class="btn ghost" id="gotBtn">✅ Got it</button>
+          <button class="btn ghost danger" id="forgotBtn">😵 Forgot / struggled</button>
+        </div>
+      </div>
+    </div>
+    <div class="row"><button class="btn primary" id="rollBtn">🎲 Give me a random problem</button></div>
+  </div>
+</section>
+
+<!-- ADD -->
+<section id="add">
+  <div class="eyebrow fx">Capture</div>
+  <h2 class="fx" id="addHeading">Save a problem.</h2>
+  <p class="lead fx">Paste the link and write the one insight you'll want next time.</p>
+  <div class="card form fx">
+    <input type="hidden" id="editId">
+    <div><label>LeetCode link</label><input id="fLink" placeholder="https://leetcode.com/problems/two-sum/"></div>
+    <div class="two">
+      <div><label>Title (auto-filled)</label><input id="fTitle"></div>
+      <div><label>Difficulty</label><select id="fDiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+    </div>
+    <div><label>Data structures / algorithms (comma separated)</label><input id="fTags" placeholder="hashmap, two pointers, dp"></div>
+    <div><label>Approach & notes</label><textarea id="fNotes" placeholder="Key insight, time/space complexity, gotchas…"></textarea></div>
+    <label class="toggle"><input type="checkbox" id="fTough"> Mark as tough 🔥</label>
+    <div class="row" style="justify-content:flex-start;margin:0">
+      <button class="btn primary" id="saveBtn">Save problem</button>
+      <button class="btn ghost hidden" id="cancelEdit">Cancel</button>
+    </div>
+    <p class="hint" id="addMsg"></p>
+  </div>
+</section>
+
+<!-- LIBRARY -->
+<section id="library">
+  <div class="eyebrow fx">Revise</div>
+  <h2 class="fx">Your library.</h2>
+  <p class="lead fx">Forgot how a problem works? Search it, read your own notes, move on.</p>
+  <div class="lib-tools fx">
+    <input id="qSearch" placeholder="🔍  Search title, tag, notes…">
+    <select id="qDiff"><option value="">All levels</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+    <select id="qFlag"><option value="">Everything</option><option value="tough">Tough only</option><option value="forgot">Forgot before</option></select>
+  </div>
+  <div class="grid" id="list"></div>
+</section>
+
+<!-- BACKUP -->
+<section id="backup">
+  <div class="eyebrow fx">Backup</div>
+  <h2 class="fx">Take it with you.</h2>
+  <p class="lead fx">Everything is stored in this browser. Export to back up or move to another device.</p>
+  <div class="card fx" style="text-align:center">
+    <div class="row" style="margin-top:0">
+      <button class="btn primary" id="exportBtn">⬇ Export JSON</button>
+      <button class="btn ghost" id="importBtn">⬆ Import JSON</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+    </div>
+    <p class="hint" id="dataMsg" style="margin-top:14px"></p>
+  </div>
+</section>
+<footer>DSA Vault · built for consistent practice</footer>
+
+<script>
+const KEY = 'dsa-vault-v1';
+let items = [];
+try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { items = []; }
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+  $('sTotal').textContent = items.length;
+  $('sTough').textContent = items.filter(i => i.tough).length;
+  $('sForgot').textContent = items.filter(i => i.forgot > 0).length;
+  $('sSeen').textContent = items.reduce((a, i) => a + (i.seen || 0), 0);
+}
+
+// scroll reveal
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+document.querySelectorAll('.fx').forEach(el => io.observe(el));
+
+// pill groups
+function pills(id) {
+  const box = $(id);
+  box.addEventListener('click', e => {
+    const b = e.target.closest('.pill'); if (!b) return;
+    box.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p === b));
+  });
+  return () => box.querySelector('.on').dataset.v;
+}
+const getDiff = pills('pDiff'), getPool = pills('pPool');
+
+// slug helpers
+const slugOf = url => { const m = String(url).match(/leetcode\.(?:com|cn)\/problems\/([a-z0-9-]+)/i); return m ? m[1].toLowerCase() : null; };
+const titleFromSlug = s => s.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+$('fLink').addEventListener('input', () => {
+  const s = slugOf($('fLink').value);
+  if (s && !$('fTitle').value.trim()) $('fTitle').value = titleFromSlug(s);
+});
+
+// add / edit
+$('saveBtn').onclick = () => {
+  const slug = slugOf($('fLink').value.trim());
+  if (!slug) { $('addMsg').textContent = '❌ Paste a valid leetcode.com/problems/... link'; return; }
+  const id = $('editId').value;
+  const data = {
+    link: 'https://leetcode.com/problems/' + slug + '/', slug,
+    title: $('fTitle').value.trim() || titleFromSlug(slug),
+    diff: $('fDiff').value,
+    tags: $('fTags').value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
+    notes: $('fNotes').value.trim(), tough: $('fTough').checked,
+  };
+  if (id) { Object.assign(items.find(i => i.id === id), data); $('addMsg').textContent = '✅ Updated'; }
+  else {
+    if (items.some(i => i.slug === slug)) { $('addMsg').textContent = '⚠️ Already saved. Edit it from the library.'; return; }
+    items.unshift({ id: uid(), added: Date.now(), seen: 0, forgot: 0, last: null, ...data });
+    $('addMsg').textContent = '✅ Saved';
+  }
+  save(); renderList(); resetForm();
+};
+function resetForm() {
+  ['editId','fLink','fTitle','fTags','fNotes'].forEach(i => $(i).value = '');
+  $('fDiff').value = 'Medium'; $('fTough').checked = false;
+  $('cancelEdit').classList.add('hidden'); $('saveBtn').textContent = 'Save problem'; $('addHeading').textContent = 'Save a problem.';
+}
+$('cancelEdit').onclick = () => { resetForm(); $('addMsg').textContent = ''; location.hash = '#library'; };
+function editItem(id) {
+  const i = items.find(x => x.id === id); if (!i) return;
+  $('editId').value = i.id; $('fLink').value = i.link; $('fTitle').value = i.title; $('fDiff').value = i.diff;
+  $('fTags').value = i.tags.join(', '); $('fNotes').value = i.notes; $('fTough').checked = i.tough;
+  $('cancelEdit').classList.remove('hidden'); $('saveBtn').textContent = 'Update problem';
+  $('addHeading').textContent = 'Edit problem.'; $('addMsg').textContent = '';
+  $('add').scrollIntoView({ behavior: 'smooth' });
+}
+function delItem(id) { if (!confirm('Delete this problem?')) return; items = items.filter(i => i.id !== id); save(); renderList(); }
+function toggleTough(id) { const i = items.find(x => x.id === id); i.tough = !i.tough; save(); renderList(); }
+
+// library
+['qSearch','qDiff','qFlag'].forEach(id => $(id).addEventListener('input', renderList));
+function renderList() {
+  const q = $('qSearch').value.toLowerCase(), d = $('qDiff').value, f = $('qFlag').value;
+  const rows = items.filter(i => (!d || i.diff === d) && (!f || (f === 'tough' ? i.tough : i.forgot > 0)) &&
+    (!q || (i.title + ' ' + i.tags.join(' ') + ' ' + i.notes).toLowerCase().includes(q)));
+  $('list').innerHTML = rows.length ? rows.map(i => `
+    <div class="card item">
+      <div><span class="badge ${i.diff}">${i.diff}</span> ${i.tough ? '🔥' : ''}</div>
+      <h3><a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.title)}</a></h3>
+      <div class="meta"><span>practised ${i.seen}×</span><span>·</span><span>forgot ${i.forgot}×</span></div>
+      <div style="margin-top:8px">${i.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+      ${i.notes ? `<div class="notes">${esc(i.notes)}</div>` : ''}
+      <div class="actions">
+        <button class="btn ghost sm" onclick="editItem('${i.id}')">Edit</button>
+        <button class="btn ghost sm" onclick="toggleTough('${i.id}')">${i.tough ? 'Unmark 🔥' : '🔥 Tough'}</button>
+        <button class="btn ghost sm danger" onclick="delItem('${i.id}')">Delete</button>
+      </div>
+    </div>`).join('') : '<div class="empty">Nothing here yet. Save your first problem ✨</div>';
+}
+
+// practice
+let current = null, rolling = false;
+$('rollBtn').onclick = () => {
+  if (rolling) return;
+  const d = getDiff(), p = getPool();
+  let pool = items.filter(i => !d || i.diff === d);
+  if (p === 'tough') pool = pool.filter(i => i.tough);
+  if (p === 'forgot') pool = pool.filter(i => i.forgot > 0);
+  if (p === 'unseen' && pool.length) { const min = Math.min(...pool.map(i => i.seen)); pool = pool.filter(i => i.seen === min); }
+  if (!pool.length) { alert('No problems match this filter yet.'); return; }
+  let choices = pool.length > 1 && current ? pool.filter(i => i.id !== current.id) : pool;
+  const next = choices[Math.floor(Math.random() * choices.length)];
+
+  rolling = true;
+  $('idle').classList.add('hidden'); $('pick').classList.remove('hidden');
+  $('reveal').classList.add('hidden'); $('revealBtn').classList.remove('hidden');
+  $('pickMeta').innerHTML = ''; $('pickLink').classList.add('hidden');
+  $('dice2').classList.remove('roll'); void $('dice2').offsetWidth; $('dice2').classList.add('roll');
+  $('pickTitle').classList.add('shuffle');
+  let n = 0;
+  const t = setInterval(() => {
+    $('pickTitle').textContent = pool[Math.floor(Math.random() * pool.length)].title;
+    if (++n > 9) { clearInterval(t); land(next); }
+  }, 75);
+};
+function land(it) {
+  current = it; rolling = false;
+  $('pickTitle').classList.remove('shuffle');
+  $('pickTitle').textContent = it.title;
+  $('pickMeta').innerHTML = `<span class="badge ${it.diff}">${it.diff}</span>${it.tough ? '<span>🔥 tough</span>' : ''}<span>practised ${it.seen}×</span>`;
+  $('pickLink').href = it.link; $('pickLink').classList.remove('hidden');
+  $('revealTags').innerHTML = it.tags.length ? it.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('') : '<span class="hint">No tags saved</span>';
+  $('revealNotes').textContent = it.notes || 'No notes saved.';
+}
+$('revealBtn').onclick = () => { $('reveal').classList.remove('hidden'); $('revealBtn').classList.add('hidden'); };
+function logResult(forgot) {
+  if (!current) return;
+  const i = items.find(x => x.id === current.id);
+  i.seen++; i.last = Date.now(); if (forgot) i.forgot++;
+  save(); renderList();
+  $('pick').classList.add('hidden'); $('idle').classList.remove('hidden');
+}
+$('gotBtn').onclick = () => logResult(false);
+$('forgotBtn').onclick = () => logResult(true);
+
+// backup
+$('exportBtn').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }));
+  a.download = 'dsa-vault-backup.json'; a.click();
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result); if (!Array.isArray(data)) throw 0;
+      const have = new Set(items.map(i => i.slug)); let n = 0;
+      data.forEach(i => { if (i.slug && !have.has(i.slug)) { items.push({ id: uid(), tags: [], notes: '', seen: 0, forgot: 0, ...i }); n++; } });
+      save(); renderList(); $('dataMsg').textContent = `✅ Imported ${n} new problems`;
+    } catch (_) { $('dataMsg').textContent = '❌ Invalid file'; }
+  };
+  r.readAsText(file);
+};
+
+save(); renderList();
+</script>
+</body>
+</html>
