@@ -88,7 +88,7 @@ h2{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.03em;line-height:1.08;font-
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.two{grid-template-columns:1fr}}
 label{font-size:.8rem;color:var(--muted);display:block;margin:0 0 6px 4px;font-weight:500}
-input[type=text],input:not([type]),select,textarea{width:100%;font:inherit;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--text);outline:none;transition:.2s}
+input[type=text],input[type=password],input:not([type]),select,textarea{width:100%;font:inherit;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--text);outline:none;transition:.2s}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
 textarea{min-height:110px;resize:vertical}
 .toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.95rem;user-select:none}
@@ -226,7 +226,18 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px 0 50px}
 <section id="backup">
   <div class="eyebrow fx">Backup</div>
   <h2 class="fx">Take it with you.</h2>
-  <p class="lead fx">Everything is stored in this browser. Export to back up or move to another device.</p>
+  <p class="lead fx">Sync across all your devices with a private GitHub Gist, or export a JSON backup.</p>
+  <div class="card form fx" style="margin-bottom:18px">
+    <div><b>☁️ Cloud sync (GitHub Gist)</b>
+      <p class="hint" style="margin-top:6px">Create a <a href="https://github.com/settings/tokens/new?scopes=gist&description=DSA%20Vault" target="_blank" rel="noopener" style="color:var(--accent)">classic token with only the "gist" scope</a>, paste it here, and repeat on each device with the same token. The token is stored only in this browser, never in the repo.</p></div>
+    <div><label>GitHub token</label><input id="sToken" type="password" placeholder="ghp_…" autocomplete="off"></div>
+    <div class="row" style="justify-content:flex-start;margin:0">
+      <button class="btn primary" id="connectBtn">Connect & sync</button>
+      <button class="btn ghost hidden" id="syncNowBtn">Sync now</button>
+      <button class="btn ghost danger hidden" id="disconnectBtn">Disconnect</button>
+    </div>
+    <p class="hint" id="syncMsg"></p>
+  </div>
   <div class="card fx" style="text-align:center">
     <div class="row" style="margin-top:0">
       <button class="btn primary" id="exportBtn">⬇ Export JSON</button>
@@ -239,15 +250,18 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px 0 50px}
 <footer>DSA Vault · built for consistent practice</footer>
 
 <script>
-const KEY = 'dsa-vault-v1';
-let items = [];
-try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { items = []; }
+const KEY = 'dsa-vault-v1', DKEY = 'dsa-vault-del', SKEY = 'dsa-vault-sync';
+let items = [], dels = [], sync = {};
+try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
+try { dels = JSON.parse(localStorage.getItem(DKEY) || '[]'); } catch (e) {}
+try { sync = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+function save(push = true) {
+  try { localStorage.setItem(KEY, JSON.stringify(items)); localStorage.setItem(DKEY, JSON.stringify(dels)); } catch (e) {}
+  if (push) schedulePush();
   $('sTotal').textContent = items.length;
   $('sTough').textContent = items.filter(i => i.tough).length;
   $('sForgot').textContent = items.filter(i => i.forgot > 0).length;
@@ -287,7 +301,7 @@ $('saveBtn').onclick = () => {
     title: $('fTitle').value.trim() || titleFromSlug(slug),
     diff: $('fDiff').value,
     tags: $('fTags').value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
-    notes: $('fNotes').value.trim(), tough: $('fTough').checked,
+    notes: $('fNotes').value.trim(), tough: $('fTough').checked, updated: Date.now(),
   };
   if (id) { Object.assign(items.find(i => i.id === id), data); $('addMsg').textContent = '✅ Updated'; }
   else {
@@ -311,8 +325,13 @@ function editItem(id) {
   $('addHeading').textContent = 'Edit problem.'; $('addMsg').textContent = '';
   $('add').scrollIntoView({ behavior: 'smooth' });
 }
-function delItem(id) { if (!confirm('Delete this problem?')) return; items = items.filter(i => i.id !== id); save(); renderList(); }
-function toggleTough(id) { const i = items.find(x => x.id === id); i.tough = !i.tough; save(); renderList(); }
+function delItem(id) {
+  if (!confirm('Delete this problem?')) return;
+  const g = items.find(i => i.id === id);
+  if (g) dels.push({ slug: g.slug, at: Date.now() });
+  items = items.filter(i => i.id !== id); save(); renderList();
+}
+function toggleTough(id) { const i = items.find(x => x.id === id); i.tough = !i.tough; i.updated = Date.now(); save(); renderList(); }
 
 // library
 ['qSearch','qDiff','qFlag'].forEach(id => $(id).addEventListener('input', renderList));
@@ -373,7 +392,7 @@ $('revealBtn').onclick = () => { $('reveal').classList.remove('hidden'); $('reve
 function logResult(forgot) {
   if (!current) return;
   const i = items.find(x => x.id === current.id);
-  i.seen++; i.last = Date.now(); if (forgot) i.forgot++;
+  i.seen++; i.last = Date.now(); i.updated = Date.now(); if (forgot) i.forgot++;
   save(); renderList();
   $('pick').classList.add('hidden'); $('idle').classList.remove('hidden');
 }
@@ -394,14 +413,104 @@ $('importFile').onchange = e => {
     try {
       const data = JSON.parse(r.result); if (!Array.isArray(data)) throw 0;
       const have = new Set(items.map(i => i.slug)); let n = 0;
-      data.forEach(i => { if (i.slug && !have.has(i.slug)) { items.push({ id: uid(), tags: [], notes: '', seen: 0, forgot: 0, ...i }); n++; } });
+      data.forEach(i => { if (i.slug && !have.has(i.slug)) { items.push({ id: uid(), tags: [], notes: '', seen: 0, forgot: 0, updated: Date.now(), ...i }); n++; } });
       save(); renderList(); $('dataMsg').textContent = `✅ Imported ${n} new problems`;
     } catch (_) { $('dataMsg').textContent = '❌ Invalid file'; }
   };
   r.readAsText(file);
 };
 
-save(); renderList();
+// ---- cloud sync (private GitHub Gist) ----
+const GH = 'https://api.github.com', FILE = 'dsa-vault.json';
+const hdr = () => ({ Authorization: 'Bearer ' + sync.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' });
+const setMsg = t => { $('syncMsg').textContent = t; };
+const stamp = x => x.updated || x.added || 0;
+
+function refreshSyncUi() {
+  const on = !!(sync.token && sync.gistId);
+  $('disconnectBtn').classList.toggle('hidden', !on);
+  $('syncNowBtn').classList.toggle('hidden', !on);
+  $('connectBtn').textContent = on ? 'Reconnect' : 'Connect & sync';
+  $('sToken').placeholder = on ? '•••••••• connected' : 'ghp_…';
+}
+function merge(remote) {
+  const dmap = new Map();
+  [...dels, ...(remote.deleted || [])].forEach(d => { if (!dmap.has(d.slug) || dmap.get(d.slug) < d.at) dmap.set(d.slug, d.at); });
+  const map = new Map();
+  [...items, ...(remote.items || [])].forEach(x => {
+    if (!x || !x.slug) return;
+    const cur = map.get(x.slug);
+    if (!cur || stamp(x) > stamp(cur)) map.set(x.slug, x);
+  });
+  const out = [];
+  map.forEach((x, slug) => { if (!(dmap.has(slug) && dmap.get(slug) >= stamp(x))) out.push(x); });
+  items = out.sort((a, b) => (b.added || 0) - (a.added || 0));
+  dels = [...dmap].map(([slug, at]) => ({ slug, at })).filter(d => !map.has(d.slug) || stamp(map.get(d.slug)) <= d.at);
+}
+async function pull() {
+  const r = await fetch(`${GH}/gists/${sync.gistId}`, { headers: hdr(), cache: 'no-store' });
+  if (!r.ok) throw new Error('pull ' + r.status);
+  const f = (await r.json()).files?.[FILE];
+  if (!f) return {};
+  const text = f.truncated ? await (await fetch(f.raw_url, { cache: 'no-store' })).text() : f.content;
+  return JSON.parse(text || '{}');
+}
+async function push() {
+  const r = await fetch(`${GH}/gists/${sync.gistId}`, { method: 'PATCH', headers: hdr(),
+    body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify({ items, deleted: dels }) } } }) });
+  if (!r.ok) throw new Error('push ' + r.status);
+}
+let syncing = false, again = false, timer;
+async function syncNow(quiet) {
+  if (!sync.token || !sync.gistId) return;
+  if (syncing) { again = true; return; }
+  syncing = true; if (!quiet) setMsg('Syncing…');
+  try {
+    merge(await pull());
+    save(false); renderList();
+    await push();
+    setMsg('☁️ Synced at ' + new Date().toLocaleTimeString());
+  } catch (e) { setMsg('⚠️ Sync failed (' + e.message + '). Your data is safe locally and will retry.'); }
+  syncing = false;
+  if (again) { again = false; syncNow(true); }
+}
+function schedulePush() { if (!sync.gistId) return; clearTimeout(timer); timer = setTimeout(() => syncNow(true), 1500); }
+
+$('connectBtn').onclick = async () => {
+  const tok = $('sToken').value.trim();
+  if (!tok) { setMsg('Paste your GitHub token first.'); return; }
+  setMsg('Connecting…');
+  try {
+    const h = { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
+    let id = null;
+    for (let p = 1; p <= 5 && !id; p++) {
+      const r = await fetch(`${GH}/gists?per_page=100&page=${p}`, { headers: h });
+      if (r.status === 401) throw new Error('invalid token');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const list = await r.json();
+      const hit = list.find(g => g.files && g.files[FILE]);
+      if (hit) id = hit.id;
+      if (list.length < 100) break;
+    }
+    if (!id) {
+      const r = await fetch(`${GH}/gists`, { method: 'POST', headers: h,
+        body: JSON.stringify({ description: 'DSA Vault data', public: false, files: { [FILE]: { content: JSON.stringify({ items, deleted: dels }) } } }) });
+      if (!r.ok) throw new Error('could not create gist (token needs the "gist" scope)');
+      id = (await r.json()).id;
+    }
+    sync = { token: tok, gistId: id };
+    try { localStorage.setItem(SKEY, JSON.stringify(sync)); } catch (e) {}
+    $('sToken').value = ''; refreshSyncUi(); await syncNow();
+  } catch (e) { setMsg('❌ ' + e.message); }
+};
+$('syncNowBtn').onclick = () => syncNow();
+$('disconnectBtn').onclick = () => {
+  sync = {}; try { localStorage.removeItem(SKEY); } catch (e) {}
+  refreshSyncUi(); setMsg('Disconnected. Local data kept on this device.');
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncNow(true); });
+
+save(false); renderList(); refreshSyncUi(); syncNow(true);
 </script>
 </body>
 </html>
