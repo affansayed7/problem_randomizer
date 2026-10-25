@@ -284,7 +284,7 @@ function pills(id) {
 const getDiff = pills('pDiff'), getPool = pills('pPool');
 
 // slug helpers
-const slugOf = url => { const m = String(url).match(/leetcode\.(?:com|cn)\/problems\/([a-z0-9-]+)/i); return m ? m[1].toLowerCase() : null; };
+const slugOf = url => { const m = String(url).match(/leetcode\.(?:com|cn)\/(?:contest\/[a-z0-9-]+\/)?problems\/([a-z0-9-]+)/i); return m ? m[1].toLowerCase() : null; };
 const titleFromSlug = s => s.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 $('fLink').addEventListener('input', () => {
   const s = slugOf($('fLink').value);
